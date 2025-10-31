@@ -1,0 +1,61 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('device_admin')</h2>
+#if $( !$rooted )
+<div class="infoBubble">#l('not_rooted_warning')</div><br>
+#end
+#bubbles()
+<p><i>#l('device_admin_help')</i></p>
+<table border="1" cellspacing="0" cellpadding="5" style="text-align: center;">
+<thead>
+<tr>
+<th>#l('device_owner')</th>
+<th>#l('device_admin')</th>
+<th>#l('lock_task_packages')</th>
+<th>#l('lock_task_mode')</th>
+</tr>
+</thead>
+<tr>
+<td>#if( $isDeviceOwner ) #l('enabled') &#x2713; #else #l('disabled') #end</td>
+<td>#if( $isDeviceAdmin ) #l('enabled') &#x2713; #else #l('disabled') #end</td>
+<td>#if( $hasLockTaskPackages ) #l('enabled') &#x2713; #else #l('disabled') #end</td>
+<td>#if( $isLockTask ) #l('enabled') &#x2713; #else #l('disabled') #end</td>
+</tr>
+<tr>
+<td>
+#if( $isDeviceOwner )
+<form method="post">
+<input class="button" type="submit" name="deviceOwnerUnset" value="#l('disable')"/>
+</form>
+#else
+<form method="post">
+<input class="button" type="submit" name="deviceOwnerSet" value="#l('enable')"/>
+</form>
+#end
+</td>
+<td>
+#if( $isDeviceAdmin )
+<form method="post">
+<input class="button" type="submit" name="deviceAdminUnset" value="#l('disable')"/>
+</form>
+#end
+</td>
+<td>
+#if( !$hasLockTaskPackages )
+<form method="post">
+<input class="button" type="submit" name="lockTaskPackagesSet" value="#l('enable')" #if( !$isDeviceOwner ) disabled="true" #end/>
+</form>
+#end
+</td>
+<td>
+#if( $isLockTask )
+<form method="post">
+<input class="button" type="submit" name="lockTaskStop" value="#l('disable')"/>
+</form>
+#else
+<form method="post">
+<input class="button" type="submit" name="lockTaskStart" value="#l('enable')" #if( !$hasLockTaskPackages ) disabled="true" #end/>
+</form>
+#end
+</td>
+</tr>
+</table>

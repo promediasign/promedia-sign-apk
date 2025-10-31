@@ -1,0 +1,165 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('other_devices')</h2>
+#bubbles()
+<p><i>
+Below you can find a list of devices with the same group code.
+If you want to create a separate group, change "Devices group code" in the Device settings.
+</i></p>
+<p><i>
+If you don't see a device on the local network after a minute (and page refresh),
+make sure UDP multicast protocol is allowed on your local network (may not work over WiFi).
+</i></p>
+<p><i>
+If you don't see a remote device after a minute (and page refresh),
+make sure both this and the remote device is connected to the internet and outside connection is not restricted by firewall.
+UPnP protocol might need to be allowed on one of the routers in order for connection to work
+</i></p>
+#if( $serverCode )
+<div style="margin-top: 15px; margin-bottom: 15px">
+<b>Status:</b>
+#if( $running )
+#if( $trackerActive )
+Scanning local network and public internet<br>
+<b>External IP:</b> $!externalIp (UPnP is #if( $upnpActive ) active#else inactive#end#if( $upnpRouterIp ), as reported by router $upnpRouterIp) #else)#end<br>
+#else
+Scanning local network only
+#if( $trackerEnabled )
+(public internet scanning enabled, but not active #if( $serverCode.length() < 12 ) because the group code is too short#end)<br>
+#else
+(public internet scanning disabled in the settings)<br>
+#end
+#end
+#else
+Not running
+<form method="post" action="/communication" style="display: inline">
+<input type="hidden" name="restart" value="true"/>
+<input type="submit" class="button small" value="Restart"/>
+</form>
+<br>
+#end
+<b>Group code:</b>
+<span style='color: transparent; text-shadow: 0px 0px 15px #222' id="serverCode">#e($serverCode)</span>
+<span class="button small" onclick="document.getElementById('serverCode').style.color = 'black'; document.getElementById('serverCode').style.textShadow = ''; this.style.display = 'none'">Reveal code</span>
+</div>
+<form method="post" action="/communication">
+<input type="hidden" name="scan" value="true"/>
+<input type="submit" class="button" value="#l('trigger_scan_now')"/>
+</form>
+<br>
+<table class='styledTable'>
+<thead>
+<tr>
+<th><input type="checkbox" onchange="$('.deviceMidCheckbox').prop('checked', this.checked ? true : false); checkDeviceMidCheckboxes();"></th>
+<th>#l('device_name')</th>
+<th>#l('device_id')</th>
+<th>#l('version')</th>
+<th>#l('ip_address')</th>
+<th>#l('web_interface')</th>
+<th>#l('last_contact')</th>
+<th></th>
+</tr>
+</thead>
+#foreach( $device in $devices )
+<tr>
+<td>
+#if( $device.appVersionCode > 0 )
+<input type="checkbox" name="deviceMid" class="deviceMidCheckbox #if( !$device.sameLan ) deviceMidWan #end" value="$device.deviceMid"
+#if( $deviceMids.contains($device.deviceMid) ) checked #end form="actionForm">
+#end
+</td>
+<td>
+#e($device.deviceName)
+</td>
+<td>#e($device.deviceId)</td>
+<td>#e($device.appVersion)</td>
+<td>#if( $device.ipAddress ) #e($device.ipAddress) #else (this device) #end</td>
+<td>
+#if( $device.sameLan )
+<a href="#e($device.webUrl)" target="_blank">#e($device.webUrl)</a>
+#else
+#e($device.webUrl)
+#end
+</td>
+<td>
+<span style="color: #if( $now - $device.lastContact < 40 * 1000 ) #172 #elseif( $now - $device.lastContact < 90 * 1000 ) #c50 #else #a22 #end " >
+${device.getLastContactTime()}
+</span>
+#if( $device.roundTrip ) (ping $device.roundTrip ms) #end
+</td>
+<td style="white-space: initial;">
+#if( $device.currentPanels )
+<span class="tooltip" style="margin-right: 1em"><span class="link">Zone info</span><span class="tooltip-content" style="box-sizing: unset">
+<table class="styledTable" style="background: inherit">
+<thead><tr><th>Zone</th><th>Active playlist</th></tr></thead>
+#foreach( $panel in $device.currentPanels )
+<tr>
+<td>#e($panel.panelName)</td>
+<td>#e($panel.playlistName)</td>
+</tr>
+#end
+</table>
+</span></span>
+#end
+#if( !$device.sameLan && $device.appVersionCode > 0 )
+<form method="post" action="/communication/tunnel" style="display: inline-block" target="_blank">
+<input type="hidden" name="deviceMid" value="$device.deviceMid"/>
+<input type="submit" class="button small" value="Tunnel web interface"/>
+#help_tooltip('Opens the web interface of this device via a tunnel in a new browser window. Only a single tunnel can be opened at any time. The transfer speed through the tunnel is much lower than the usual network speed.')
+</form>
+#end
+#if( $device.ipAddress && $device.appVersionCode > 0 )
+<form action="/communication/screenshot" style="display: inline-block" target="_blank">
+<input type="hidden" name="deviceMid" value="$device.deviceMid"/>
+<input type="submit" class="button small" value="Screenshot"/>
+</form>
+#end
+</td>
+</tr>
+#end
+</table>
+<h4>Commands for checked devices:</h4>
+<form method="post" action="/communication" id="actionForm">
+#if( !$numberedPlaylists.isEmpty() )
+<input type="hidden" name="action" value="playlist/set" disabled id="playlistSetInput"/>
+Play numbered playlist in the main zone:
+#foreach ( $playlist in $numberedPlaylists )
+<button type="submit" name="params" value="playlistNumber=${playlist.number}" class="button action"
+onclick="document.getElementById('playlistSetInput').disabled = false;" title="${playlist.name}">
+${playlist.number}.
+</button>
+#end
+#help_tooltip('Starts playback for a numbered playlist on each device that is checked above. A playlist with this number has to be set up beforehand on each device separately. This command doesn''t synchronize any files, just triggers playback.')
+<br><br>
+#end
+<button type="submit" name="action" value="resume" class="button action">&#9205;</button>
+<button type="submit" name="action" value="pause" class="button action">&#9208;</button>
+<button type="submit" name="action" value="next" class="button action">&#9197; #l('go_to_next')</button>
+<br><br>
+<button type="submit" name="action" value="screencheck" class="button action">#l('screen_check')</button>
+<button type="submit" name="action" value="beep" class="button action">&#128266; #l('beep')</button>
+<br><br>
+<button type="submit" name="action" value="reload" class="button action">#l('reload')</button>
+<br><br>
+<button type="submit" name="action" value="synchronizeFiles" class="button action onlylocal" style="height: auto;">
+Synchronize all files from this device<br>(replaces previous files!)
+</button>
+#help_tooltip('Synchronizes all files from this device to other devices, replacing their previous files. Works only for devices on the same LAN.')
+<button type="submit" name="action" value="synchronizeConfig" class="button action" style="height: auto;">
+Synchronize configuration from this device<br>(replaces previous configuration!)
+</button>
+#help_tooltip('Synchronizes configuration and settings from this device to other devices, replacing their previous configuration and settings.')
+</form>
+#else
+<p><b>Discovery of other devices hasn't been set up yet. Do you want to allow it?</b></p>
+<form method="post" action="/communication">
+<input type="hidden" name="allow" value="true"/>
+#l('communication_server_code'):
+<input type="text" name="communication_server_code" required="true" minlength="15" class="textbox"> #help_tooltip('communication_server_code_help')
+<span class="button small" onclick="document.getElementsByName('communication_server_code')[0].value = randomString(25)">Generate random</span>
+<br>
+<label for="communication_tracker_enabled">#l('communication_tracker_enabled'):</label>
+<input type="checkbox" name="communication_tracker_enabled" id="communication_tracker_enabled"> #help_tooltip('communication_tracker_enabled_help')
+<br>
+<input type="submit" class="button" value="Allow"/>
+</form>
+#end

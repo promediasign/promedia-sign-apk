@@ -1,0 +1,156 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('playlist_schedule') #e($panelItem.name)</h2>
+#bubbles()
+<p><i>#l('playlist_schedule_help')</i></p>
+<form method="post" action="/screen_layout/panel/schedule?panelId=$panelItem.id">
+<table id="scheduleTable" class="styledTable">
+<thead>
+<tr>
+<th>#l('playlist')</th>
+<th>#l('time_from')</th>
+<th>#l('time_to')</th>
+<th>#l('days_of_week')</th>
+<th>#l('date_from')</th>
+<th>#l('date_to')</th>
+<th>#l('priority')</th>
+<th></th>
+</tr>
+</thead>
+#foreach( $schedule in $schedules )
+<tr>
+<td>
+<input type="hidden" name="id${foreach.index}" value="$schedule.id">
+<select name="playlistId${foreach.index}" class="coloredSelect">
+#foreach( $playlist in $playlists )
+<option value="$playlist.id" #if( $playlist.id == $schedule.playlistId ) selected #end>#e($playlist.name)</option>
+#end
+</select>
+</td>
+<td>
+<input type="time" name="timeFrom${foreach.index}" value="$schedule.timeFrom" class="textbox" style="width:auto" required
+onchange="dateTimeFromChanged(this);">
+</td>
+<td>
+<input type="time" name="timeTo${foreach.index}" value="$schedule.timeTo" class="textbox" style="width:auto" required
+onchange="dateTimeToChanged(this);">
+</td>
+<td>
+<span>
+<span class="day-checkbox #if( $schedule.monday ) checked #end" onclick="toggleDayCheckbox(this)">$daysOfWeek[2]</span>
+<input type="hidden" name="monday${foreach.index}" #if( $schedule.monday ) value="true" #end/>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.tuesday ) checked #end" onclick="toggleDayCheckbox(this)">$daysOfWeek[3]</span>
+<input type="hidden" name="tuesday${foreach.index}" #if( $schedule.tuesday ) value="true" #end/>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.wednesday ) checked #end" onclick="toggleDayCheckbox(this)">$daysOfWeek[4]</span>
+<input type="hidden" name="wednesday${foreach.index}" #if( $schedule.wednesday ) value="true" #end/>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.thursday ) checked #end" onclick="toggleDayCheckbox(this)">$daysOfWeek[5]</span>
+<input type="hidden" name="thursday${foreach.index}" #if( $schedule.thursday ) value="true" #end/>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.friday ) checked #end" onclick="toggleDayCheckbox(this)">$daysOfWeek[6]</span>
+<input type="hidden" name="friday${foreach.index}" #if( $schedule.friday ) value="true" #end/>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.saturday ) checked #end" onclick="toggleDayCheckbox(this)">$daysOfWeek[7]</span>
+<input type="hidden" name="saturday${foreach.index}" #if( $schedule.saturday ) value="true" #end/>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.sunday ) checked #end" onclick="toggleDayCheckbox(this)">$daysOfWeek[1]</span>
+<input type="hidden" name="sunday${foreach.index}" #if( $schedule.sunday ) value="true" #end/>
+</span>
+</td>
+<td><input type="date" name="dateFrom${foreach.index}" value="$schedule.dateFrom" class="textbox" style="width:auto"
+onchange="dateTimeFromChanged(this);"></td>
+<td><input type="date" name="dateTo${foreach.index}" value="$schedule.dateTo" class="textbox" style="width:auto"
+onchange="dateTimeToChanged(this);"></td>
+<td>
+<select name="priority${foreach.index}" style="width:auto">
+<option value="2" #if( $schedule.priority == 2 ) selected #end>#l('low')</option>
+<option value="3" #if( $schedule.priority == 3 ) selected #end>#l('medium')</option>
+<option value="4" #if( $schedule.priority == 4 ) selected #end>#l('high')</option>
+</select>
+</td>
+<td class="scheduleEdit"><span onclick="contentRemove(this);">X</span></td>
+</tr>
+#end
+</table>
+<span class="button small" onclick="addScheduleRow();">+ #l('add_row')</span>
+<br><br>
+<input type="submit" class="button" value="#l('save')"/>
+<a href="/screen_layout/edit?layout=$panelItem.screenLayoutId" class="button">#l('back')</a>
+</form>
+<div style="margin-top: 35px;position: relative">
+<h3 style="margin-bottom: 10px">#l('preview_schedules')</h3>
+<div style="position: absolute; right: 0; top: 0;">
+<span class='button small' id='schedule-previous'>&lt;</span>
+<span class='button small' id='schedule-today'>#l('today')</span>
+<span class='button small' id='schedule-next'>&gt;</span>
+</div>
+</div>
+<div id="schedule" style="height: 460px;"></div>
+<script src="/web/toastui-calendar.min.js"></script>
+<script>
+$(document).ready(function () {
+setupCalendar("/ajax/schedule/panel?panelId=${panelItem.id}&", "#l('playlist')", "/playlists/edit?playlist=");
+});
+</script>
+<table style="display:none;">
+<tr id="reserveRow">
+<td>
+<select name="playlistId__*INDEX*__" class="coloredSelect">
+#foreach( $playlist in $playlists )
+<option value="$playlist.id">#e($playlist.name)</option>
+#end
+</select>
+</td>
+<td><input type="time" name="timeFrom__*INDEX*__" value="00:00" class="textbox" style="width:auto" required
+onchange="dateTimeFromChanged(this);"></td>
+<td><input type="time" name="timeTo__*INDEX*__" value="23:59" class="textbox" style="width:auto" required
+onchange="dateTimeToChanged(this);"></td>
+<td>
+<span>
+<span class="day-checkbox checked" onclick="toggleDayCheckbox(this)">$daysOfWeek[2]</span>
+<input type="hidden" name="monday__*INDEX*__" value="true"/>
+</span>
+<span>
+<span class="day-checkbox checked" onclick="toggleDayCheckbox(this)">$daysOfWeek[3]</span>
+<input type="hidden" name="tuesday__*INDEX*__" value="true"/>
+</span>
+<span>
+<span class="day-checkbox checked" onclick="toggleDayCheckbox(this)">$daysOfWeek[4]</span>
+<input type="hidden" name="wednesday__*INDEX*__" value="true"/>
+</span>
+<span>
+<span class="day-checkbox checked" onclick="toggleDayCheckbox(this)">$daysOfWeek[5]</span>
+<input type="hidden" name="thursday__*INDEX*__" value="true"/>
+</span>
+<span>
+<span class="day-checkbox checked" onclick="toggleDayCheckbox(this)">$daysOfWeek[6]</span>
+<input type="hidden" name="friday__*INDEX*__" value="true"/>
+</span>
+<span>
+<span class="day-checkbox checked" onclick="toggleDayCheckbox(this)">$daysOfWeek[7]</span>
+<input type="hidden" name="saturday__*INDEX*__" value="true"/>
+</span>
+<span>
+<span class="day-checkbox checked" onclick="toggleDayCheckbox(this)">$daysOfWeek[1]</span>
+<input type="hidden" name="sunday__*INDEX*__" value="true"/>
+</span>
+</td>
+<td><input type="date" name="dateFrom__*INDEX*__" class="textbox" style="width:auto" onchange="dateTimeFromChanged(this);"></td>
+<td><input type="date" name="dateTo__*INDEX*__" class="textbox" style="width:auto" onchange="dateTimeToChanged(this);"></td>
+<td>
+<select name="priority__*INDEX*__" style="width:auto">
+<option value="2">#l('low')</option>
+<option value="3">#l('medium')</option>
+<option value="4">#l('high')</option>
+</select>
+</td>
+<td class="scheduleEdit"><span onclick="contentRemove(this);">X</span></td>
+</tr>
+</table>

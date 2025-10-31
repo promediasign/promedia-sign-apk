@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+#parse('/templates/intro/intro-common.vm')
+<html style='width: 100%; height: 100%; margin: 0; background: white'>
+<body style='width: 100%; height: 100%; margin: 0'>
+<div style='padding: 1vh 3vw; color: black; font-family: sans-serif'>
+<div style='font-size:3.5vw; text-align: center; margin-bottom: 3.5vw;'>
+<image #image_logo() style='height: 30vw;'>
+</div>
+<div style="margin-bottom: 2vh; text-align: center;font-size: 3.1vw;">
+#if( $webServiceEnabled && $webConnected )
+<div style='display:inline-block;margin-right:1vw'>
+<b>#l('web_interface'):</b><br>
+<i>$httpUrl</i><br>
+#if( $webQR ) <img src="$webQR" style="width: 20vw"> #end
+</div>
+#end
+</div>
+<div style="font-size:3.1vw;">
+<b>#l('upload_file_through'):</b>
+<ul style='padding-left:20px;margin-top:5px'>
+<li>#l('web_interface') -
+#if( $webServiceEnabled )
+#if( $webConnected )
+#l('enter_address_into_browser_1') <i>$httpUrl</i> #l('enter_address_into_browser_2')
+#else
+#l('web_interface_connect_to_network')
+#end
+#else
+#l('enable_web_services_in_settings')
+#end
+</li>
+<li>#l('ftp_server') -
+#if( $webServiceEnabled )
+#if( $webConnected )
+#l('upload_to_ftp_1') <i>$ftpUrl</i> #l('upload_to_ftp_2')
+#else
+#l('web_interface_connect_to_network')
+#end
+#else
+#l('enable_web_services_in_settings')
+#end
+</li>
+<li>#l('usb_flash_drive') -
+#if( $usbEnabled )
+#l('insert_usb_flash_drive_with_files_1')
+#if( $usbCopyFolder ) #l('insert_usb_flash_drive_with_files_2') <i>$usbCopyFolder</i> #end
+#l('insert_usb_flash_drive_with_files_3')
+#else
+#l('enable_usb_flash_drive_in_settings')
+#end
+</li>
+<li>#l('adding_from_storage')</li>
+</ul>
+#l('press_menu_to_access_settings')&nbsp;
+#if( $webServiceEnabled && $webConnected )
+#l('advanced_settings_browser_1') <i>$httpUrl</i> #l('advanced_settings_browser_2')
+#end
+</div>
+</body>
+</html>

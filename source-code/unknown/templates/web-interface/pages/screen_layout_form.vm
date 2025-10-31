@@ -1,0 +1,277 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('screen_layouts')</h2>
+#bubbles()
+<form method="post" id="builderForm" action="/screen_layout/edit">
+<table>
+#form_table_line('layoutName', 'name2', 'text', $null, $null)
+#form_table_line('rotation', 'rotation', 'number', 'rotation_help', 'min="0" max="270" step="90"')
+#if( $useIntervals )
+#form_table_line('interval', 'layout_interval', 'number', 'layout_interval_help', 'min="0" step="0.01"')
+#end
+</table>
+#if( $screenLayout.id ) <input type="hidden" name="layout" value="$screenLayout.id" /> #end
+<p><i>#l('layout_builder_help')</i></p>
+<div id="tabs">
+<ul>
+#foreach( $display in $displays )
+<li><a href="#tabs-$display.id">$display.desc()</a></li>
+#end
+</ul>
+#foreach( $display in $displays )
+<div id="tabs-$display.id" style="position: relative;">
+<div class="layoutBuilder panelSnap #if( $display.main ) mainDisplay #end "
+#if( $screenLayout.rotation == 90 || $screenLayout.rotation == 270 ) data-width="$display.height" data-height="$display.width"
+#else data-width="$display.width" data-height="$display.height" #end></div>
+</div>
+#end
+</div>
+<div id="panelList"></div>
+<span class="button" onclick="addNewPanel();">#l('add_new_panel')</span>
+<br><br>
+<input type="submit" class="button" value="#l('save')" onclick="saveLayoutBuilder();"/>
+#if( $screenLayout.id && $screenLayout.id != $currentId ) <a class="button" href="/screen_layout?activate=$screenLayout.id">#l('activate')</a> #end
+<a href="/screen_layout" class="button">#l('back')</a>
+#if( $screenLayout.id )
+<br><br>
+#if( $schedules )
+<span class="button disabled">#l('delete')</span>
+#help_tooltip('cant_delete_used_in_schedule')
+#else
+<a href="/screen_layout/delete?screen_layout=$screenLayout.id" class="button">#l('delete')</a>
+#end
+<input type="submit" class="button" value="#l('clone_screen_layout')" name="clone" onclick="saveLayoutBuilder();"/>
+#end
+</form>
+#if( $schedules )
+<h3 style="margin-top: 30px;margin-bottom: 10px;">#l('screen_layout_schedule')</h3>
+<table id="scheduleTable" class="styledTable">
+<thead>
+<tr>
+<th>#l('time_from')</th>
+<th>#l('time_to')</th>
+<th>#l('days_of_week')</th>
+<th>#l('date_from')</th>
+<th>#l('date_to')</th>
+<th>#l('priority')</th>
+</tr>
+</thead>
+#foreach( $schedule in $schedules )
+<tr>
+<td>$schedule.timeFrom</td>
+<td>$schedule.timeTo</td>
+<td>
+<span>
+<span class="day-checkbox #if( $schedule.monday ) checked #end">$daysOfWeek[2]</span>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.tuesday ) checked #end">$daysOfWeek[3]</span>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.wednesday ) checked #end">$daysOfWeek[4]</span>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.thursday ) checked #end">$daysOfWeek[5]</span>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.friday ) checked #end">$daysOfWeek[6]</span>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.saturday ) checked #end">$daysOfWeek[7]</span>
+</span>
+<span>
+<span class="day-checkbox #if( $schedule.sunday ) checked #end">$daysOfWeek[1]</span>
+</span>
+</td>
+<td>$!schedule.dateFrom</td>
+<td>$!schedule.dateTo</td>
+<td>
+#if( $schedule.priority == 2 ) #l('low')
+#elseif( $schedule.priority == 3 ) #l('medium')
+#elseif( $schedule.priority == 4 ) #l('high')
+#end
+</td>
+</tr>
+#end
+</table>
+<a href="/screen_layout/schedule" class="button small">#l('edit_schedules')</a>
+#end
+<script>
+var panels = $panels;
+var localeLeft = "#l('left')";
+var localeTop = "#l('top')";
+var localeWidth = "#l('width')";
+var localeHeight = "#l('height')";
+var localeSave = "#l('save')";
+var localeCancel = "#l('cancel')";
+var localeDelete = "#l('delete')";
+var localeDisplay = "#l('display')";
+var localePlaylistSchedule = "#l('playlist_schedule')";
+</script>
+<script src="/web/layoutBuilder.js?t=${resourceTag}"></script>
+<div id="panelDialog" style="display: none">
+<table>
+<tr>
+<td>#l('panel_name'):</td>
+<td><input type="text" class="textbox" id="dialog-name" minlength="1" maxlength="100"/></td>
+</tr>
+#if( $multiDisplayAllow )
+<tr>
+<td>#l('display'):</td>
+<td>
+<select id="dialog-displayId">
+<option value="" style="font-style: italic;">#l('default_display')</option>
+#foreach( $display in $displays )
+<option value="$display.id">$display.desc()</option>
+#end
+</select>
+</td>
+</tr>
+#end
+<tr>
+<td>#l('background_color'):</td>
+<td><input type="text" class="color-picker colorPicker" id="dialog-backgroundColor"/></td>
+</tr>
+<tr>
+<td><label for="dialog-main">#l('main_panel'):</label></td>
+<td>
+<input type="checkbox" id="dialog-main"/>
+#help_tooltip( "main_panel_help" )
+</td>
+</tr>
+</table>
+<hr>
+<table>
+<tr>
+<td>#l('left'):</td>
+<td>
+<input type="number" class="textbox small" id="dialog-left" min="-50" max="100" step="0.01"/>%
+<input type="number" class="textbox small" id="dialog-left-px"/>px
+</td>
+</tr>
+<tr>
+<td>#l('top'):</td>
+<td>
+<input type="number" class="textbox small" id="dialog-top" min="-50" max="100" step="0.01"/>%
+<input type="number" class="textbox small" id="dialog-top-px"/>px
+</td>
+</tr>
+<tr>
+<td>#l('width'):</td>
+<td>
+<input type="number" class="textbox small" id="dialog-width" min="0" max="100" step="0.01"/>%
+<input type="number" class="textbox small" id="dialog-width-px"/>px
+</td>
+</tr>
+<tr>
+<td>#l('height'):</td>
+<td>
+<input type="number" class="textbox small" id="dialog-height" min="0" max="100" step="0.01"/>%
+<input type="number" class="textbox small" id="dialog-height-px"/>px
+</td>
+</tr>
+</table>
+<hr>
+<table>
+<tr>
+<td>#l('transition_type'):</td>
+<td>
+<select id="dialog-animationType">
+<option value='NONE'>#l('transition_type_NONE')</option>
+<option value='CROSSFADE'>#l('transition_type_CROSSFADE')</option>
+<option value='CROSSFADE_TRUE'>#l('transition_type_CROSSFADE_TRUE')</option>
+<option value='TO_RIGHT'>#l('transition_type_TO_RIGHT')</option>
+<option value='TO_LEFT'>#l('transition_type_TO_LEFT')</option>
+<option value='TO_TOP'>#l('transition_type_TO_TOP')</option>
+<option value='TO_BOTTOM'>#l('transition_type_TO_BOTTOM')</option>
+<option value='SHRINK'>#l('transition_type_SHRINK')</option>
+<option value='ROTATE_SHRINK'>#l('transition_type_ROTATE_SHRINK')</option>
+<option value='ENLARGE_CROSSFADE'>#l('transition_type_ENLARGE_CROSSFADE')</option>
+<option value='EXPLODE'>#l('transition_type_EXPLODE')</option>
+<option value='FOLD'>#l('transition_type_FOLD')</option>
+<option value='HORIZONTAL_FLIP'>#l('transition_type_HORIZONTAL_FLIP')</option>
+<option value='VERTICAL_FLIP'>#l('transition_type_VERTICAL_FLIP')</option>
+<option value='CUBE_INSIDE'>#l('transition_type_CUBE_INSIDE')</option>
+<option value='CUBE_INSIDE_RANDOM'>#l('transition_type_CUBE_INSIDE_RANDOM')</option>
+<option value='CUBE_OUTSIDE'>#l('transition_type_CUBE_OUTSIDE')</option>
+<option value='CUBE_OUTSIDE_RANDOM'>#l('transition_type_CUBE_OUTSIDE_RANDOM')</option>
+<option value='HIDE'>#l('transition_type_HIDE')</option>
+<option value='RANDOM'>#l('transition_type_RANDOM')</option>
+</select>
+#help_tooltip( "transition_type_help" )
+</td>
+</tr>
+<tr>
+<td>#l('transition_length'):</td>
+<td>
+<input type="number" class="textbox" id="dialog-animationLength" min="0" max="9000"/>ms
+#help_tooltip( "transition_length_help" )
+</td>
+</tr>
+</table>
+<hr>
+<table>
+<tr>
+<td>#l('stroke'):</td>
+<td><input type="number" class="textbox" id="dialog-strokeWidth" min="0"/>px</td>
+</tr>
+<tr>
+<td>#l('stroke_color'):</td>
+<td><input type="text" class="color-picker colorPicker" id="dialog-strokeColor"/></td>
+</tr>
+</table>
+<hr>
+<table>
+<tr>
+<td>#l('top_left_radius'):</td>
+<td><input type="number" class="textbox small" id="dialog-radiusTopLeft" min="0"/>px</td>
+</tr>
+<tr>
+<td>#l('top_right_radius'):</td>
+<td><input type="number" class="textbox small" id="dialog-radiusTopRight" min="0"/>px</td>
+</tr>
+<tr>
+<td>#l('bottom_left_radius'):</td>
+<td><input type="number" class="textbox small" id="dialog-radiusBottomLeft" min="0"/>px</td>
+</tr>
+<tr>
+<td>#l('bottom_right_radius'):</td>
+<td><input type="number" class="textbox small" id="dialog-radiusBottomRight" min="0"/>px</td>
+</tr>
+</table>
+<hr>
+<table>
+<tr>
+<td>#l('color_gradient'):</td>
+<td>
+<select id="dialog-gradType" onchange="onGradientTypeSelectChanged(this.value);">
+<option value=''>#l('gradient_type_none')</option>
+<option value='0'>#l('gradient_type_linear')</option>
+<option value='1'>#l('gradient_type_radial')</option>
+</select>
+</td>
+</tr>
+<tr id="row-color2">
+<td>#l('second_color'):</td>
+<td><input type="text" class="color-picker colorPicker" id="dialog-color2"/></td>
+</tr>
+<tr id="row-gradRadius">
+<td>#l('gradient_radius'):</td>
+<td><input type="number" class="textbox" id="dialog-gradRadius" min="0"/>px</td>
+</tr>
+<tr id="row-gradOrient">
+<td>#l('gradient_orientation'):</td>
+<td>
+<select id="dialog-gradOrient">
+<option value='TOP_BOTTOM'>#l('gradient_orientation_TOP_BOTTOM')</option>
+<option value='TR_BL'>#l('gradient_orientation_TR_BL')</option>
+<option value='RIGHT_LEFT'>#l('gradient_orientation_RIGHT_LEFT')</option>
+<option value='BR_TL'>#l('gradient_orientation_BR_TL')</option>
+<option value='BOTTOM_TOP'>#l('gradient_orientation_BOTTOM_TOP')</option>
+<option value='BL_TR'>#l('gradient_orientation_BL_TRM')</option>
+<option value='LEFT_RIGHT'>#l('gradient_orientation_LEFT_RIGHT')</option>
+<option value='TL_BR'>#l('gradient_orientation_TL_BR')</option>
+</select>
+</td>
+</tr>
+</table>
+</div>

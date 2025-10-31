@@ -1,0 +1,265 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('grabber')</h2>
+#bubbles()
+<p><i>#l('grabber_help')</i></p>
+#if( !$grabberRefreshRate )
+<p style='color:#900'><b>#l('grabber_not_setup')</b></p>
+#else
+<p>#l('grabber_interval'): $grabberRefreshRate</p>
+#end
+<h3>#if( $grabberData.id ) #l('grabber_edit') #else #l('grabber_create') #end </h3>
+<table>
+<tr>
+<td>#l('type'):</td>
+<td>
+<select id='grabberType' onchange='toggleGrabberType(this.value);' #if( $grabberData.id ) disabled #end >
+<option value="http">HTTP / HTTPS / FTP server</option>
+<option value="gdrive" #if( ($grabberData.url && $grabberData.url.startsWith("gdrive://")) || $gdriveShow ) selected #end >Google Drive</option>
+<option value="dropbox" #if( ($grabberData.url && $grabberData.url.startsWith("dropbox://")) || $dropboxShow ) selected #end >Dropbox</option>
+<option value="webdav" #if( ($grabberData.url && $grabberData.url.startsWith("webdav://")) || $webdavShow ) selected #end >WebDAV</option>
+<option value="sftp" #if( ($grabberData.url && $grabberData.url.startsWith("sftp://")) || $sftpShow ) selected #end >SFTP</option>
+</select>
+</td>
+</tr>
+</table>
+<div id='type-http'>
+<form method='post' action='/grabber'>
+#if( $grabberData.id )
+<input type='hidden' name='id' value='$grabberData.id'/>
+#end
+<table>
+#form_table_line('url', 'from_url', 'text', $null, "maxlength='215' style='width:500px' placeholder='http://'")
+#form_table_line('fileName', 'to_file_name', 'text', $null, "maxlength='105' style='width:500px'")
+#checkbox_table_line('clearFolder', 'clear_folder', 'clear_folder_help', $null, false)
+</table>
+<input type='submit' class='button' value="#l('save')"/>
+<a href='/grabber' class='button'>#l('cancel')</a>
+</form>
+</div>
+<div id='type-gdrive'>
+#if( $gdriveContainsUser )
+#if( $gdriveFolders )
+<form method='post' action='/grabber'>
+#if( $grabberData.id )
+<input type='hidden' name='id' value='$grabberData.id'/>
+#end
+#l('cloud_grabber_synchronize_from', 'Google Drive')
+<select name='url'>
+<option value=''></option>
+#foreach( $folder in $gdriveFolders )
+<option value="gdrive://${folder.first}" #if( "gdrive://${folder.first}" == $grabberData.url ) selected #end>
+${folder.second}
+</option>
+#end
+</select>
+#l('cloud_grabber_synchronize_to')
+<select name='fileName'>
+<option value=''></option>
+#foreach( $folder in $allFolders )
+<option value="#e($folder)" #if( $folder == $grabberData.fileName ) selected #end>
+#e($folder)
+</option>
+#end
+</select>
+<table>
+#checkbox_table_line('clearFolder2', 'clear_folder', 'clear_folder_help', $null, false)
+</table>
+<input type='submit' class='button' value="#l('save')"/>
+<a href='/grabber' class='button'>#l('cancel')</a>
+</form>
+#else
+#l('cloud_grabber_no_folder_found', 'Google Drive')<br>
+#end
+<br>
+<form method='post' action='/grabber'>
+<input type='hidden' name='gdrive_logout' value='true'/>
+<input type='submit' class='button' value="#l('cloud_grabber_logout', 'Google Drive')"/>
+#help_tooltip( "cloud_grabber_logout_help", "Google Drive" )
+</form>
+#else
+<p>#l('cloud_grabber_login_none', 'Google Drive')</p>
+<form method='post' action='/grabber'>
+<input type='hidden' name='gdrive_login' value='true'/>
+<input type='submit' class='button' value="#l('cloud_grabber_login', 'Google Drive')"/>
+</form>
+<p><i>#l('cloud_grabber_login_help', 'Google Drive')</i></p>
+#end
+</div>
+<div id='type-dropbox'>
+#if( $dropboxContainsUser )
+#if( $dropboxFolders )
+<form method='post' action='/grabber'>
+#if( $grabberData.id )
+<input type='hidden' name='id' value='$grabberData.id'/>
+#end
+#l('cloud_grabber_synchronize_from', 'Dropbox') (#l('cloud_grabber_pick_one'))
+#set( $found = false )
+<select name='url' id='dropboxUrl' onchange='if (this.value.length > 0) {document.getElementById("dropboxUrl2").disabled = true; document.getElementById("dropboxUrl2").value="";} else {document.getElementById("dropboxUrl2").disabled = false;}'>
+<option value=''></option>
+#foreach( $folder in $dropboxFolders )
+<option value="dropbox://${folder.first}" #if( "dropbox://${folder.first}" == $grabberData.url ) selected #set( $found = true ) #end>
+${folder.second}
+</option>
+#end
+</select>
+<input name='url2' id='dropboxUrl2' class='textbox' onchange='if (this.value.length > 0) {document.getElementById("dropboxUrl").disabled = true; document.getElementById("dropboxUrl").value="";} else {document.getElementById("dropboxUrl").disabled = false;}' #if( $found ) disabled #else value="#e($!grabberData.clearedDropboxUrl)" #end />
+#l('cloud_grabber_synchronize_to')
+<select name='fileName'>
+<option value=''></option>
+#foreach( $folder in $allFolders )
+<option value="#e($folder)" #if( $folder == $grabberData.fileName ) selected #end>
+#e($folder)
+</option>
+#end
+</select>
+<table>
+#checkbox_table_line('clearFolder3', 'clear_folder', 'clear_folder_help', $null, false)
+</table>
+<input type='submit' class='button' value="#l('save')"/>
+<a href='/grabber' class='button'>#l('cancel')</a>
+</form>
+#else
+#l('cloud_grabber_no_folder_found', 'Dropbox')<br>
+#end
+<br>
+<form method='post' action='/grabber'>
+<input type='hidden' name='dropbox_logout' value='true'/>
+<input type='submit' class='button' value="#l('cloud_grabber_logout', 'Dropbox')"/>
+#help_tooltip( "cloud_grabber_logout_help", "Dropbox" )
+</form>
+#else
+<p>#l('cloud_grabber_login_none', 'Dropbox')</p>
+<form method='post' action='/grabber'>
+<input type='hidden' name='dropbox_login' value='true'/>
+<input type='submit' class='button' value="#l('cloud_grabber_login', 'Dropbox')"/>
+</form>
+<p><i>#l('cloud_grabber_login_help', 'Dropbox')</i></p>
+#end
+</div>
+<div id='type-webdav'>
+<form method='post' action='/grabber'>
+#if( $grabberData.id )
+<input type='hidden' name='id' value='$grabberData.id'/>
+#end
+<input type='hidden' name='webdav' value='true'/>
+<table>
+<tr><td colspan="2"><b>#l('cloud_grabber_synchronize_from', 'WebDAV'): #help_tooltip( "cloud_grabber_webdav_help" )</b></td></tr>
+#form_table_line('url', 'webdav_server_url', 'text', $null, "maxlength='200' style='width:500px' placeholder='http://'")
+#form_table_line('username1', 'username', 'text', $null, "maxlength='50' autocomplete='off'")
+#form_table_line('password1', 'password', 'password', $null, "maxlength='50' autocomplete='off'")
+<tr><td colspan="2"><b>#l('cloud_grabber_synchronize_to'):</b></td></tr>
+<tr>
+<td>#l('folder_name'):</td>
+<td>
+<select name='fileName' #if( $errors.get('fileName') ) class="error" #end>
+<option value=''></option>
+#foreach( $folder in $allFolders )
+<option value="#e($folder)" #if( $folder == $grabberData.fileName ) selected #end>
+#e($folder)
+</option>
+#end
+</select>
+#if( $errors.get('fileName') )
+<span class='error'>$errors.get('fileName')</span>
+#end
+</td>
+#checkbox_table_line('clearFolder4', 'clear_folder', 'clear_folder_help', $null, false)
+</table>
+<input type='submit' class='button' value="#l('save')"/>
+<a href='/grabber' class='button'>#l('cancel')</a>
+</form>
+</div>
+<div id='type-sftp'>
+<form method='post' action='/grabber'>
+#if( $grabberData.id )
+<input type='hidden' name='id' value='$grabberData.id'/>
+#end
+<input type='hidden' name='sftp' value='true'/>
+<table>
+<tr><td colspan="2"><b>#l('cloud_grabber_synchronize_from', 'SFTP'): #help_tooltip( "cloud_grabber_sftp_help" )</b></td></tr>
+#form_table_line('url', 'sftp_server_url', 'text', 'sftp_server_url_help', "maxlength='200' style='width:500px'")
+#form_table_line('server_folder', 'sftp_server_folder', 'text', 'sftp_server_folder_help', "maxlength='200' style='width:500px'")
+#form_table_line('username2', 'username', 'text', $null, "maxlength='50' autocomplete='off'")
+#form_table_line('password2', 'password', 'password', $null, "maxlength='50' autocomplete='off'")
+<tr><td colspan="2"><b>#l('cloud_grabber_synchronize_to'):</b></td></tr>
+<tr>
+<td>#l('folder_name'):</td>
+<td>
+<select name='fileName' #if( $errors.get('fileName') ) class="error" #end>
+<option value=''></option>
+#foreach( $folder in $allFolders )
+<option value="#e($folder)" #if( $folder == $grabberData.fileName ) selected #end>
+#e($folder)
+</option>
+#end
+</select>
+#if( $errors.get('fileName') )
+<span class='error'>$errors.get('fileName')</span>
+#end
+</td>
+#checkbox_table_line('clearFolder5', 'clear_folder', 'clear_folder_help', $null, false)
+</table>
+<input type='submit' class='button' value="#l('save')"/>
+<a href='/grabber' class='button'>#l('cancel')</a>
+</form>
+</div>
+<br><br>
+<h3>#l('grabber_list')</h3>
+#if( $grabberDatas )
+<table class='styledTable'>
+<thead>
+<tr>
+<th>#l('from_url')</th>
+<th>#l('to_file_name')</th>
+<th>#l('clear_folder')</th>
+<th></th>
+</tr>
+</thead>
+#foreach( $data in $grabberDatas )
+<tr>
+<td style='white-space:normal'>$data.formattedUrl</td>
+<td style='white-space:normal'>$data.fileName</td>
+<td>#if( $data.clearFolder ) #l('yes') #else #l('no') #end</td>
+<td>
+<form method="post" action="/grabber" style="display: inline-block">
+<input type="hidden" name="download" value="${data.id}"/>
+<input type="submit" value="#l('download_now')" class="button small"/>
+</form>
+<a href="/grabber?update=${data.id}" class="button small">#l('edit')</a>
+<form method="post" action="/grabber" style="display: inline-block">
+<input type="hidden" name="delete" value="${data.id}"/>
+<input type="submit" value="#l('delete')" class="button small"/>
+</form>
+</td>
+</tr>
+#end
+</table>
+#else
+<p>#l('grabber_data_empty')</p>
+#end
+<br><br>
+<h3>#l('synchronization_history')</h3>
+#if( $grabberStatistics )
+<table class='styledTable'>
+<thead>
+<tr>
+<th>#l('from_url')</th>
+<th>#l('to_file_name')</th>
+<th>#l('started')</th>
+<th>#l('finished')</th>
+<th>#l('result')</th>
+</tr>
+</thead>
+#foreach( $statistic in $grabberStatistics )
+<tr>
+<td style='white-space:normal'>$statistic.getFormattedSource()</td>
+<td style='white-space:normal'>$statistic.target</td>
+<td>#l( $statistic.startMethod.getDesc() )<br>$statistic.getStartedFormatted()</td>
+<td>$statistic.getFinishedFormatted()</td>
+<td style='white-space:normal; #if( $statistic.filesFailed > 0 ) color:#900 #end '>$statistic.getFullString()</td>
+</tr>
+#end
+</table>
+#else
+<p>#l('synchronization_history_empty')</p>
+#end

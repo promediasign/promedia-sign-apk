@@ -1,0 +1,23 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('users')</h2>
+#bubbles()
+<p><i>#l('users_help')</i></p>
+<a class='button' href="/users/edit">#l('user_add')</a>
+<table class='styledTable'>
+<thead>
+<tr>
+<th>#l('name')</th>
+<th>#l('username')</th>
+<th>#l('role')</th>
+<th></th>
+</tr>
+</thead>
+#foreach( $user in $users )
+<tr>
+<td>#e($user.name)</td>
+<td>#e($user.username)</td>
+<td>#l("user_role_${user.role}")</td>
+<td><a href="/users/edit?user=${user.id}" class="link">#l('edit')</a></td>
+</tr>
+#end
+</table>

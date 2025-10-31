@@ -1,0 +1,43 @@
+#macro( form_table_line $name $description $type $help $additional)
+<tr>
+<td>#l($description): </td>
+<td>
+<input type="$type" name="$name" id="$name" class="textbox #if( $errors.get($name) ) error #end " $!additional #if( $params.get($name) ) value="#e($params.get($name))" #end />
+#if( $help )
+#help_tooltip( $help )
+#end
+#if( $errors.get($name) )
+<span class='error'>$errors.get($name)</span>
+#end
+</td>
+</tr>
+#end
+#macro( checkbox_table_line $name $description $help $additional $disabled)
+<tr>
+<td><label for="${name}0">#l($description): </label></td>
+<td>
+<input type='checkbox' id="${name}0" onchange="document.getElementById('${name}1').value = this.checked;"
+#if( "true" == ($params.get($name)) ) checked #end #if( $disabled ) disabled #end />
+<input type='hidden' id='${name}1' name='${name}' value='$params.get($name)'/>
+#if( $help )
+#help_tooltip( $help )
+#end
+#if( $errors.get($name) )
+<span class='error'>$errors.get($name)</span>
+#end
+</td>
+</tr>
+#end
+#macro( bubbles )
+#if( $errors.size() > 0 )
+<div><div class="errorBubble"> #if( $errors.get('_ROOT_') ) $errors.get('_ROOT_') #else #l('error_processing') #end </div></div>
+#elseif( $resultMessage )
+<div><div class="okBubble">$resultMessage</div></div>
+#end
+#end
+#macro( help_tooltip $help $var )
+<span class="tooltip"><span class="link">?</span><span class="tooltip-content">#l($help, $var)</span></span>
+#end
+#macro( default_var $parm $default )
+#if( "$!parm" == "" )${default}#else${parm}#end
+#end

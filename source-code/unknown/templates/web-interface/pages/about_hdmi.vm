@@ -1,0 +1,45 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>About HDMI input</h2>
+#bubbles()
+#if( $status )
+<table>
+<tr>
+<td>Type:</td>
+<td>#if( $status.type == 0 ) HDMI RX #elseif( $status.type == 1 ) MIPI #elseif( $status.type == -1 ) Unknown #else $status.type #end</td>
+</tr>
+<tr>
+<td>Plugged:</td>
+<td>#if( $plugged ) Yes #else No #end</td>
+</tr>
+<tr>
+<td>Status:</td>
+<td>#if( $status.status == 0 ) Not ready #elseif( $status.status == 1 ) Ready #else $status.status #end</td>
+</tr>
+<tr>
+<td>Resolution:</td>
+<td>$status.width x $status.height px</td>
+</tr>
+<tr>
+<td>Scan mode:</td>
+<td>#if( $status.scanMode == 0 ) Progressive #elseif( $status.scanMode == 1 ) Interlaced #else $status.scanMode #end</td>
+</tr>
+<tr>
+<td>Color:</td>
+<td>#if( $status.color == 0 ) RGB #elseif( $status.color == 1 ) YUV422 #elseif( $status.color == 2 ) YUV444 #elseif( $status.color == 3 ) YUV411 #else $status.color #end</td>
+</tr>
+<tr>
+<td>Audio frequency:</td>
+<td>$status.freq Hz</td>
+</tr>
+<tr>
+<td>S/PDIF:</td>
+<td>#if( $status.spdif == 0 ) LPCM #elseif( $status.spdif == 1 ) RAW #else $status.spdif #end</td>
+</tr>
+<tr>
+<td>Audio status:</td>
+<td>#if( $status.audioStatus == 0 ) Not ready #elseif( $status.audioStatus == 1 ) Ready #else $status.audioStatus #end</td>
+</tr>
+</table>
+#else
+<p>HDMI input by Realtek not found on this device</p>
+#end

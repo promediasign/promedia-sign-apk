@@ -1,0 +1,21 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('screensaver')</h2>
+#bubbles()
+<p><i>#l('screensaver_help')</i></p>
+<form method="post" action="/screen_layout/screensaver">
+<table>
+#form_table_line('screensaverAfterMinutes', 'screensaver_after_minutes', 'number', $null, "min='1' max='300'")
+<tr>
+<td>#l('screen_layouts'):</td>
+<td>
+<select name="selectedLayoutId">
+<option value="" style="font-style: italic;">Disabled</option>
+#foreach( $layout in $layouts )
+<option value="$layout.id" #if( $layout.id == $selectedLayoutId ) selected #end>#e( $layout.name )</option>
+#end
+</select>
+</td>
+</tr>
+</table>
+<input type="submit" class="button" value="#l('save')"/>
+</form>

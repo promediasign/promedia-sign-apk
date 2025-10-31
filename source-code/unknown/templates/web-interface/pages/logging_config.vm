@@ -1,0 +1,33 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>Logging configuration</h2>
+#bubbles()
+<form method="POST">
+<table class="styledTable playlistEdit">
+<thead>
+<tr><th>Logger name</th><th>Level</th></tr>
+</thead>
+#foreach( $logger in $loggers )
+<tr>
+<td>$logger.first</td>
+<td>
+<select name="level-$logger.first" style="width: auto">>
+#foreach( $level in $levels )
+<option value="$level" #if( ${logger.second.toString().equals($level)} ) selected #end>$level</option>
+#end
+</select>
+</td>
+</tr>
+#end
+<tr>
+<td><input type="text" class="textbox" name="new-logger" style="width: 300px" placeholder="Class name"></td>
+<td><select name="new-level" style="width: auto">
+#foreach( $level in $levels )
+<option value="$level">$level</option>
+#end
+</select>
+</td>
+</tr>
+</table>
+<br>
+<input type="submit" class="button" value="Save">
+</form>

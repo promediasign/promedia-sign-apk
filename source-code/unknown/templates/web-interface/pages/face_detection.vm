@@ -1,0 +1,51 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('face_detection')</h2>
+#bubbles()
+#if( $results )
+<p><i>You can find results from face detection below. They can be used for creating triggers (see menu Settings - Triggers)</i></p>
+<div style="position: relative">
+<div style="display: inline-block; min-width: 40%; vertical-align: top;">
+<form method="post" action="/face_detection">
+<input type="hidden" name="restart" value="true"/>
+<button type="submit" class="button">Restart face detection service</button>
+</form>
+<br>
+<table class='styledTable'>
+<thead>
+<tr>
+<th></th>
+<th>Time</th>
+<th>Faces</th>
+<th>Detected eyes</th>
+<th>Largest face</th>
+</tr>
+</thead>
+#foreach( $result in $results )
+<tr>
+<td>${foreach.index}.</td>
+<td>$result.time.toString()</td>
+<td style="color: #if( $result.facesCount == 0) grey #else black #end">$result.facesCount</td>
+<td style="color: #if( $result.eyesOpened == 0) grey #else black #end">${result.getEyesOpenedFormatted()}</td>
+<td style="color: #if( $result.largestFace == 0) grey #else black #end">$result.largestFace %</td>
+</tr>
+#end
+</table>
+</div>
+<div style="display: inline-block; width: 59%; vertical-align: top;">
+<b>Last image, with detected faces in red rectangle.</b>
+Hover over the rectangle to get face tracking ID in the bottom left corner and opened eye probability for each eye.
+#if( $imageSize ) <i>(${imageSize.width} x ${imageSize.height} px)</i> #end
+<button onclick="document.getElementById('faceDetectionImage').data='/face_detection/image.svg?t=' + new Date().getTime();"
+class="button small">Refresh image</button>
+<br>
+<object data="/face_detection/image.svg" style="width: 100%" type="image/svg+xml" id="faceDetectionImage"></object>
+</div>
+</div>
+#else
+<p><i>Face detection is not active, please wait 10 seconds or check whether it has been activated in the Device settings,
+camera is connected to the device and whether this app has permissions to access the camera.</i></p>
+<form method="post" action="/face_detection">
+<input type="hidden" name="restart" value="true"/>
+<button type="submit" class="button">Restart face detection service</button>
+</form>
+#end

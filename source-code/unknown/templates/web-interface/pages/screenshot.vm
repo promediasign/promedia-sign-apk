@@ -1,0 +1,10 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>Screenshot</h2>
+<i>#l('screenshot_help')</i>
+<br><br>
+#foreach( $display in $displays )
+<b>${display.desc()}:</b><br>
+<img src='/screenshot.jpg?displayId=${display.displayId}&t=${timestamp}' alt='#l('screenshot_loading')' class='screenshot'
+onclick='this.src="/screenshot.jpg?displayId=${display.displayId}&t=" + new Date().getTime();'/>
+<br><br>
+#end

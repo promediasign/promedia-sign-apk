@@ -1,0 +1,80 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('key_mapping')</h2>
+#bubbles()
+<p><i>#l('key_mapping_help')</i></p>
+<h3>#l('key_mapping_list')</h3>
+<table class="styledTable">
+<thead>
+<tr>
+<th>#l('key')</th>
+<th>#l('android_code')</th>
+<th>#l('action_down')</th>
+<th>#l('action_up')</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+#foreach( $keyAction in $keyActions )
+<tr>
+<td>${keycodes.get($keyAction.keyCode)}</td>
+<td style="color: #888">$keyAction.keyCode</td>
+<td>
+$keyAction.actionDown.getDesc()
+#if( $keyAction.properties.entrySet() ) ($keyAction.formatProperties()) #end
+</td>
+<td>#if( $keyAction.actionUp ) $keyAction.actionUp.getDesc() #end</td>
+<td>
+<form method="post" action="/key_mapping">
+<input type="hidden" name="delete" value="${keyAction.keyCode}"/>
+<span class="link" onclick="$(this).closest('form').submit();">X</span>
+</form>
+</td>
+</tr>
+#end
+</tbody>
+</table>
+<h3>#l('key_mapping_add')</h3>
+<form method="post" action="/key_mapping">
+<table>
+<tr>
+<td>#l('key'):</td>
+<td>
+<select name="keyCode">
+#foreach( $keycode in $keycodes.entrySet() )
+<option value="${keycode.key}">${keycode.value}</option>
+#end
+</select>
+</td>
+<td>
+<span class="button" onclick="detectKey()">#l('detect_key')</span>
+</td>
+</tr>
+<tr>
+<td>#l('action_down'):</td>
+<td>
+<select name="actionDown" onchange="keyMappingChanged(this);">
+#foreach( $action in $actionsDown )
+<option value="${action}" #if( ! $action.properties.isEmpty() ) #foreach( $entry in $action.properties.entrySet() ) data-property-key="$entry.key" data-property-value="$entry.value" #end #end>$action.getDesc()</option>
+#end
+</select>
+</td>
+<td id="propertyCell" style="display:none">
+<input id="propertyKeyInput" type="hidden" name="propertyKey"/>
+<span id="propertyKeyText"></span>:
+<input class="textbox" type="text" name="propertyValue"/>
+</td>
+</tr>
+<tr>
+<td>#l('action_up'):</td>
+<td>
+<select name="actionUp">
+<option value=""></option>
+#foreach( $action in $actionsUp )
+<option value="${action}">$action.getDesc()</option>
+#end
+</select>
+</td>
+</tr>
+</table>
+<input type="submit" class="button" value="#l('save')"/>
+</form>

@@ -1,0 +1,24 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>#l('triggers')</h2>
+#bubbles()
+<form method="post" action="/triggers">
+<p>You can define triggers, conditions and actions on this page.
+#if( $debug )
+<input type="hidden" name="debug" value="false"/>
+Debug mode is currently on, you can find output in Logs. <input type="submit" class="button small" value="Turn off"/>
+#else
+<input type="hidden" name="debug" value="true"/>
+Debug mode is currently off. <input type="submit" class="button small" value="Turn on"/>
+#end
+</p>
+</form>
+<div id="blocklyDiv" style="height: 650px; width: 97%;"></div>
+<br>
+<form method="post" action="/triggers">
+<input type="hidden" id="inputWorkspace" name="workspace" value="#e($inputWorkspace)"/>
+<input type="hidden" id="inputCode" name="code" value=""/>
+<input type="submit" class="button" value="#l('save')" onclick="saveBlockly();"/>
+<a href="/triggers" class="button">#l('cancel')</a>
+</form>
+<script src="/web/blockly.min.js" type="text/javascript"></script>
+<input type="file" id="importFile" accept=".json,text/json" style="opacity:0">

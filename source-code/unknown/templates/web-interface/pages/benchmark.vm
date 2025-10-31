@@ -1,0 +1,24 @@
+#parse('/templates/web-interface/commons.vm')
+<h2>Benchmark</h2>
+#bubbles()
+<p><i>Simple hardware benchmark to measure performance of your Android device.</i></p>
+<form method="post">
+<input type="submit" class="button" value="Run benchmark"/>
+</form>
+#if( $result )
+<br>
+<table class='styledTable'>
+<thead>
+<tr>
+<th>Benchmark name</th>
+<th>Score (higher is better)</th>
+</tr>
+</thead>
+#foreach( $entry in $result )
+<tr>
+<td>#e($entry.first)</td>
+<td>$entry.second</td>
+</tr>
+#end
+</table>
+#end

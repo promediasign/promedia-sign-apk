@@ -1,0 +1,310 @@
+#parse('/templates/web-interface/commons.vm')
+#if( !$branding )
+<h2>#l('welcome_message')</h2>
+#end
+#bubbles()
+<div class="container">
+#if( $newInstall || $updatedVersion )
+<div class="row">
+<div class="col-sm-12">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('welcome')</h5>
+<span class="deleteX" onclick="hideWelcome(this);" style="float:right">X</span>
+</div>
+<div class="card-body">
+#if( $newInstall )
+#l('new_install_message')
+#else
+#l('updated_version_message')
+#end
+</div>
+</div>
+</div>
+</div>
+#end
+<div class="row">
+<div class="col-sm-4">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('active_screen_layout')</h5>
+</div>
+<div class="card-body">
+<p class="card-text" style="text-align: center;">
+#if( $!screenLayoutCurrent.id )
+#e($!screenLayoutCurrent.name)
+#if( $user.isAdmin() ) <a href="/screen_layout/edit?layout=$!screenLayoutCurrent.id" class="link-icon">&#128279;</a> #end
+#if( $screenLayoutCurrent.isPowerOff() ) <br><i>Screen power OFF</i> #end
+#else
+<span style="color: #a10;">#l('scheduled_none')</span>
+#if( $user.isAdmin() ) <a href="/screen_layout/schedule" class="link-icon">&#128279;</a> #end
+#end
+<br>
+#if( $screenLayoutIsSet ) <span onclick="ajaxReload('/ajax/layout/clear')" class="link">#l('set_original_screen_layout') &#8617;</span> #end
+</p>
+</div>
+</div>
+</div>
+<div class="col-sm-4">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('main_zone_fullscreen')</h5>
+</div>
+<div class="card-body">
+<p class="card-text" style="text-align: center;">
+#if( $isFullscreen) #l('yes') #else #l('no') #end
+<span onclick="ajaxReload('/ajax/fullscreen/toggle')" class="link" style="font-size: 22px; font-weight: bold; line-height: 14px;">&#8644;</span>
+</p>
+</div>
+</div>
+</div>
+<div class="col-sm-4">
+<div class="card">
+#set ($volume = $curVolume * 100 / $maxVolume)
+<div class="card-header">
+<h5 class="card-title h5">#l('volume'): <span id="volume">$volume</span> %</h5>
+</div>
+<div class="card-body">
+<p class="card-text" style="text-align: center;">
+<input type="range" style="vertical-align:top;margin:0;padding:0;width:100%" min="0" max="$maxVolume" value="$curVolume"
+onchange="ajaxReload('/ajax/volume/set?vol=' + this.value); document.getElementById('volume').innerHTML = Math.round(this.value * 100 / this.max);"/>
+<br>
+<span onclick="ajaxReload('/ajax/beep');" class="link">&#128266; #l('beep')</span>
+</p>
+</div>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="col-sm-12">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('media_status_control')</h5>
+</div>
+<div class="card-body">
+<table class="styledTable">
+<thead>
+<tr>
+<th>#l('panel_name')</th>
+#if( $multiDisplayAllow )
+<th>#l('display')</th>
+#end
+<th>#l('active_playlist')</th>
+<th>#l('change_status')</th>
+<th>#l('current_media')</th>
+<th>#l('go_to_next')</th>
+<th>#l('set_original_playlist')</th>
+</tr>
+</thead>
+#foreach( $itemThread in $itemThreads )
+<tr>
+#if($itemThread.first)
+<td>
+#e($!itemThread.first.name)
+#if( $user.isAdmin() && $!itemThread.first.id )
+<a href="/screen_layout/panel/schedule?panelId=$itemThread.first.id" class="link-icon">&#128279;</a>
+#end
+</td>
+#if( $multiDisplayAllow )
+<td>
+$!itemThread.second.displayId
+</td>
+#end
+<td>
+<span #if( $!itemThread.second.currentPlaylistResolver.currentPlaylist.hasError() ) style="color:red" #end>
+#e($!itemThread.second.currentPlaylistResolver.currentPlaylist.name)
+</span>
+#if($!itemThread.second.currentPlaylistResolver.currentPlaylist.id)
+<a href="/playlists/edit?playlist=$!itemThread.second.currentPlaylistResolver.currentPlaylist.id" class="link-icon">
+&#128279;
+</a>
+#if( $itemThread.second.playlistSyncCode && $syncCodes.get($itemThread.second.playlistSyncCode).size() > 1 )
+<span class="tooltip" style="margin-right: 1em"><span class="link">&#128225;</span><span class="tooltip-content" style="box-sizing: unset">
+<b>#l('sync_playback_with_zones'):</b>
+#foreach( $panelName in $syncCodes.get($itemThread.second.playlistSyncCode) )
+<div>#e($panelName)</div>
+#end
+</span></span>
+#end
+#end
+</td>
+<td>
+#if( $!itemThread.second.isPaused() )
+<span class="link" onclick="ajaxReload('/ajax/resume?panelId=$!itemThread.first.id');">
+#l('paused') &#9208;
+</span>
+#else
+<span class="link" onclick="ajaxReload('/ajax/pause?panelId=$!itemThread.first.id');">
+#l('playing') &#9205;
+</span>
+#end
+</td>
+<td>$!{itemThread.second.getLastFileName()} $!{itemThread.second.getFormattedPosition()}</td>
+<td><span class="link" onclick="ajaxReload('/ajax/next?panelId=$!itemThread.first.id')">&#10140;</span></th>
+<td>
+#if( $!itemThread.second.currentPlaylistResolver.isSetPlaylist() )
+<span class="link" onclick="ajaxReload('/ajax/playlist/clear?panelId=$!itemThread.first.id')">&#8617;</span>
+#end
+</th>
+#else
+<td>
+#l('background_audio')
+#if( $user.isAdmin() )
+<a href="/playlists/audio/schedule" class="link-icon">&#128279;</a>
+#end
+</td>
+#if( $multiDisplayAllow )
+<td></td>
+#end
+<td>
+<span #if( $!itemThread.second.currentPlaylistResolver.currentPlaylist.hasError() ) style="color:red" #end>
+#e($!itemThread.second.currentPlaylistResolver.currentPlaylist.name)
+</span>
+#if($!itemThread.second.currentPlaylistResolver.currentPlaylist.id)
+<a href="/playlists/edit?playlist=$!itemThread.second.currentPlaylistResolver.currentPlaylist.id" class="link-icon">
+&#128279;
+</a>
+#end
+</td>
+<td>
+#if( $!itemThread.second.isPaused() )
+<span class="link" onclick="ajaxReload('/ajax/resume?panelId=audio');">
+#l('paused') &#9208;
+</span>
+#else
+<span class="link" onclick="ajaxReload('/ajax/pause?panelId=audio');">
+#l('playing') &#9205;
+</span>
+#end
+</td>
+<td>$!{itemThread.second.getLastFileName()} $!{itemThread.second.getFormattedPosition()}</td>
+<td><span class="link" onclick="ajaxReload('/ajax/next?panelId=audio')">&#10140;</span></th>
+<td>
+#if( $!itemThread.second.currentPlaylistResolver.isSetPlaylist() )
+<span class="link" onclick="ajaxReload('/ajax/playlist/clear?panelId=audio')">&#8617;</span>
+#end
+</th>
+#end
+</tr>
+#end
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="row">
+#set ($columnCount = 0)
+#if( !$numberedPlaylists.isEmpty() )
+#set ($columnCount = $columnCount + 6)
+<div class="col-sm-6">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('numbered_playlists')</h5>
+</div>
+<div class="card-body">
+<table class="styledTable">
+#foreach ( $playlist in $numberedPlaylists )
+<tr>
+<td>${playlist.number}.</td>
+<td>
+#e($playlist.name)
+<a href="/playlists/edit?playlist=$playlist.id" class="link-icon">&#128279;</a>
+</td>
+<td><span class="link" onclick="ajaxReload('/ajax/playlist/set?playlist=$playlist.id')">#l("playlist_switch_to")</span></td>
+</tr>
+#end
+</table>
+</div>
+</div>
+</div>
+#end
+#if( $!mqttState )
+#set ($columnCount = $columnCount + 3)
+<div class="col-sm-3">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('mqtt_state')</h5>
+</div>
+<div class="card-body">
+<p class="card-text" #if( $mqttState == 'Connected' ) style='color: green; text-align: center' #else style='color: red; text-align: center' #end >$mqttState</p>
+</div>
+</div>
+</div>
+#end
+#set ($columnCount = $columnCount + 3)
+<div class="col-sm-3">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('external_storages')</h5>
+</div>
+<div class="card-body">
+#if( $externalStorageInfo )
+$externalStorageInfo
+#else
+#l('no_external_storage')
+#end
+</div>
+</div>
+</div>
+#if($columnCount >= 12)
+#set ($columnCount = 0)
+</div>
+<div class="row">
+#end
+#if( $!faceDetection )
+#set ($columnCount = $columnCount + 3)
+<div class="col-sm-3">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('face_detection')</h5>
+</div>
+<div class="card-body">
+<p class="card-text" style="text-align: center">
+<a href="/face_detection" target="_blank">#l('face_detection_current_count'): $faceDetection.faceCurrentCount</a><br>
+#l('face_detection_unique_count'): $faceDetection.faceUniqueCount
+</p>
+</div>
+</div>
+</div>
+#end
+#if($columnCount >= 12)
+#set ($columnCount = 0)
+</div>
+<div class="row">
+#end
+#if( $!nearbyDevices )
+#set ($columnCount = $columnCount + 3)
+<div class="col-sm-3">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('other_devices')</h5>
+</div>
+<div class="card-body">
+<p class="card-text" style="text-align: center">
+<a href="/communication">#l('count'): $nearbyDevices</a>
+</p>
+</div>
+</div>
+</div>
+#end
+#if($columnCount >= 12)
+#set ($columnCount = 0)
+</div>
+<div class="row">
+#end
+#set ($columnCount = $columnCount + 3)
+<div class="col-sm-3">
+<div class="card">
+<div class="card-header">
+<h5 class="card-title h5">#l('display')</h5>
+</div>
+<div class="card-body">
+<p class="card-text" style="text-align: center">
+#l('number_of_active_displays'): $numberOfDisplays
+<button class="button" onclick="$.post('/ajax/screencheck')">#l('show_screencheck_on_all_displays')</button>
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
